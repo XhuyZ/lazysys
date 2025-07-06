@@ -46,6 +46,9 @@ var (
 	aboutStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FFD700")).
 			Bold(true)
+
+	dimStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#444444"))
 )
 
 func (m model) View() string {
@@ -53,23 +56,32 @@ func (m model) View() string {
 		return m.loadingView()
 	}
 
-	if m.searchMode {
-		return m.searchView()
-	}
+	main := m.mainView()
 
+	// Floating modal overlays
 	if m.showHelp {
-		return m.helpView()
+		return dimStyle.Render(main) + "\n" + m.floatingModal(m.helpView())
 	}
-
 	if m.showAbout {
-		return m.aboutView()
+		return dimStyle.Render(main) + "\n" + m.floatingModal(m.aboutView())
 	}
-
+	if m.searchMode {
+		return dimStyle.Render(main) + "\n" + m.floatingModal(m.searchView())
+	}
 	if m.showMenu {
-		return m.menuView()
+		return dimStyle.Render(main) + "\n" + m.floatingModal(m.menuView())
 	}
 
-	return m.mainView()
+	return main
+}
+
+func (m model) floatingModal(content string) string {
+	// Center modal in 80x25 for now (could be dynamic)
+	return lipgloss.Place(
+		80, 25,
+		lipgloss.Center, lipgloss.Center,
+		content,
+	)
 }
 
 func (m model) loadingView() string {

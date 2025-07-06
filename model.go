@@ -110,7 +110,41 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.searchInput.Blur()
 				m.searchInput.SetValue("")
 				if searchTerm != "" {
-					return m, performSearch(searchTerm, m.focused)
+					// Perform search and focus
+					if m.focused == 0 {
+						found := -1
+						for i, item := range m.allServices.Items() {
+							if s, ok := item.(service); ok {
+								if strings.Contains(strings.ToLower(s.name), strings.ToLower(searchTerm)) || strings.Contains(strings.ToLower(s.description), strings.ToLower(searchTerm)) {
+									found = i
+									break
+								}
+							}
+						}
+						if found >= 0 {
+							m.allServices.Select(found)
+							m.message = fmt.Sprintf("Found and focused '%s'", searchTerm)
+						} else {
+							m.message = fmt.Sprintf("No services found matching '%s'", searchTerm)
+						}
+					} else {
+						found := -1
+						for i, item := range m.runningServices.Items() {
+							if s, ok := item.(service); ok {
+								if strings.Contains(strings.ToLower(s.name), strings.ToLower(searchTerm)) || strings.Contains(strings.ToLower(s.description), strings.ToLower(searchTerm)) {
+									found = i
+									break
+								}
+							}
+						}
+						if found >= 0 {
+							m.runningServices.Select(found)
+							m.message = fmt.Sprintf("Found and focused '%s'", searchTerm)
+						} else {
+							m.message = fmt.Sprintf("No services found matching '%s'", searchTerm)
+						}
+					}
+					return m, nil
 				}
 				return m, tea.Batch(cmds...)
 			case "esc":
@@ -190,25 +224,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					// All services menu
 					switch m.menuChoice {
 					case 1:
-						return m, executeServiceCommand(m.selectedService.name, "start")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "start"), loadServices())
 					case 2:
-						return m, executeServiceCommand(m.selectedService.name, "restart")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "restart"), loadServices())
 					case 3:
-						return m, executeServiceCommand(m.selectedService.name, "stop")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "stop"), loadServices())
 					case 4:
-						return m, executeServiceCommand(m.selectedService.name, "disable")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "disable"), loadServices())
 					case 5:
-						return m, executeServiceCommand(m.selectedService.name, "enable")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "enable"), loadServices())
 					}
 				} else {
 					// Running services menu
 					switch m.menuChoice {
 					case 1:
-						return m, executeServiceCommand(m.selectedService.name, "stop")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "stop"), loadServices())
 					case 2:
-						return m, executeServiceCommand(m.selectedService.name, "restart")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "restart"), loadServices())
 					case 3:
-						return m, executeServiceCommand(m.selectedService.name, "disable")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "disable"), loadServices())
 					}
 				}
 				m.showMenu = false
@@ -220,25 +262,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					// All services menu
 					switch m.menuChoice {
 					case 1:
-						return m, executeServiceCommand(m.selectedService.name, "start")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "start"), loadServices())
 					case 2:
-						return m, executeServiceCommand(m.selectedService.name, "restart")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "restart"), loadServices())
 					case 3:
-						return m, executeServiceCommand(m.selectedService.name, "stop")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "stop"), loadServices())
 					case 4:
-						return m, executeServiceCommand(m.selectedService.name, "disable")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "disable"), loadServices())
 					case 5:
-						return m, executeServiceCommand(m.selectedService.name, "enable")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "enable"), loadServices())
 					}
 				} else {
 					// Running services menu
 					switch m.menuChoice {
 					case 1:
-						return m, executeServiceCommand(m.selectedService.name, "stop")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "stop"), loadServices())
 					case 2:
-						return m, executeServiceCommand(m.selectedService.name, "restart")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "restart"), loadServices())
 					case 3:
-						return m, executeServiceCommand(m.selectedService.name, "disable")
+						m.showMenu = false
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "disable"), loadServices())
 					}
 				}
 				m.showMenu = false
@@ -261,6 +311,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 			}
+		case "r":
+			return m, loadServices()
 		}
 
 	case tea.WindowSizeMsg:
