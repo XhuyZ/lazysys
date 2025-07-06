@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -58,27 +56,32 @@ func (m model) View() string {
 
 	main := m.mainView()
 
-	// Floating modal overlays
+	// Get terminal size for centering
+	w, h := 80, 25
+	if m.allServices.Width() > 0 && m.allServices.Height() > 0 {
+		w = m.allServices.Width()*2 + 8 // 2 panes + padding
+		h = m.allServices.Height() + 10 // add for title/help
+	}
+
 	if m.showHelp {
-		return dimStyle.Render(main) + "\n" + m.floatingModal(m.helpView())
+		return dimStyle.Render(main) + "\n" + m.floatingModal(m.helpView(), w, h)
 	}
 	if m.showAbout {
-		return dimStyle.Render(main) + "\n" + m.floatingModal(m.aboutView())
+		return dimStyle.Render(main) + "\n" + m.floatingModal(m.aboutView(), w, h)
 	}
 	if m.searchMode {
-		return dimStyle.Render(main) + "\n" + m.floatingModal(m.searchView())
+		return dimStyle.Render(main) + "\n" + m.floatingModal(m.searchView(), w, h)
 	}
 	if m.showMenu {
-		return dimStyle.Render(main) + "\n" + m.floatingModal(m.menuView())
+		return dimStyle.Render(main) + "\n" + m.floatingModal(m.menuView(), w, h)
 	}
 
 	return main
 }
 
-func (m model) floatingModal(content string) string {
-	// Center modal in 80x25 for now (could be dynamic)
+func (m model) floatingModal(content string, w, h int) string {
 	return lipgloss.Place(
-		80, 25,
+		w, h,
 		lipgloss.Center, lipgloss.Center,
 		content,
 	)
@@ -128,15 +131,14 @@ Navigation:
   j / k              Navigate up/down in lists
   Enter              Select service for action
   s                  Search services
+  r                  Reload UI/services
   ?                  Toggle this help
   P                  Show about/coffee info
-  q / Ctrl+C         Quit
+  q / Esc / Ctrl+C   Quit/close window
 
 Service Actions:
   All Services:      1=Start, 2=Restart, 3=Stop, 4=Disable, 5=Enable
   Running Services:  1=Stop, 2=Restart, 3=Disable
-
-Press any key to return...
 `
 	return modalStyle.Render(help)
 }
@@ -159,24 +161,20 @@ func (m model) aboutView() string {
 ║  Made with ❤️  using BubbleTea                              ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
-
-Press any key to return...
 `
 	return modalStyle.Render(about)
 }
 
 func (m model) mainView() string {
-	var s strings.Builder
+	var s string
 
 	// Title
-	s.WriteString(titleStyle.Render("🔧 LazySys Service Manager"))
-	s.WriteString("\n\n")
+	s += titleStyle.Render("🔧 LazySys Service Manager") + "\n\n"
 
 	// Service counts
 	allCount := len(m.allServices.Items())
 	runningCount := len(m.runningServices.Items())
-	
-	s.WriteString(fmt.Sprintf("📊 Total Services: %d | 🟢 Running: %d\n\n", allCount, runningCount))
+	s += fmt.Sprintf("📊 Total Services: %d | 🟢 Running: %d\n\n", allCount, runningCount)
 
 	// Lists
 	allServicesView := m.allServices.View()
@@ -199,20 +197,18 @@ func (m model) mainView() string {
 		runningServicesView,
 	)
 
-	s.WriteString(lists)
-	s.WriteString("\n\n")
+	s += lists + "\n\n"
 
 	// Help bar
-	helpText := "H/L: Navigate | j/k: Scroll | Enter: Action | s: Search | ?: Help | P: About | q: Quit"
-	s.WriteString(helpStyle.Render(helpText))
+	helpText := "H/L: Navigate | j/k: Scroll | Enter: Action | s: Search | r: Reload | ?: Help | P: About | q: Quit"
+	s += helpStyle.Render(helpText)
 
 	// Message
 	if m.message != "" {
-		s.WriteString("\n")
-		s.WriteString(messageStyle.Render(m.message))
+		s += "\n" + messageStyle.Render(m.message)
 	}
 
-	return s.String()
+	return s
 }
 
 func (m model) menuView() string {
@@ -237,19 +233,15 @@ func (m model) menuView() string {
 		}
 	}
 
-	var menuContent strings.Builder
-	menuContent.WriteString(title)
-	menuContent.WriteString("\n\n")
-
+	var menuContent string
+	menuContent += title + "\n\n"
 	for i, item := range menuItems {
 		if i == m.menuChoice {
-			menuContent.WriteString("▶ " + item + "\n")
+			menuContent += "▶ " + item + "\n"
 		} else {
-			menuContent.WriteString("  " + item + "\n")
+			menuContent += "  " + item + "\n"
 		}
 	}
-
-	menuContent.WriteString("\nEnter: Execute | Esc: Cancel")
-
-	return modalStyle.Render(menuContent.String())
-} 
+	menuContent += "\nEnter: Execute | Esc/q: Cancel"
+	return modalStyle.Render(menuContent)
+}

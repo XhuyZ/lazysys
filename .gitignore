@@ -1,0 +1,25 @@
+# Binaries
+lazysys
+lazysys-linux-*
+
+# Build artifacts
+*.exe
+*.out
+*.test
+
+# Dependency directories
+vendor/
+
+# Editor/IDE files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+.DS_Store
+
+# Logs
+*.log
+
+# OS files
+Thumbs.db 

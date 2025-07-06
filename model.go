@@ -161,14 +161,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch msg.String() {
 		case "q", "ctrl+c":
-			if m.showMenu {
+			if m.showMenu || m.showHelp || m.showAbout || m.searchMode {
 				m.showMenu = false
+				m.showHelp = false
+				m.showAbout = false
+				m.searchMode = false
 			} else {
 				return m, tea.Quit
 			}
 		case "esc":
-			if m.showMenu {
+			if m.showMenu || m.showHelp || m.showAbout || m.searchMode {
 				m.showMenu = false
+				m.showHelp = false
+				m.showAbout = false
+				m.searchMode = false
 			}
 		case "H":
 			m.focused = 0
