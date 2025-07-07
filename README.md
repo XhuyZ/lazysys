@@ -2,6 +2,9 @@
 
 A beautiful Terminal User Interface (TUI) for managing systemd services, built with Go and BubbleTea.
 
+ <video src="assets/lazysys-git.mp4" controls width="600"></video>
+
+
 ## ✨ Features
 
 - **Split View Interface**: Two windows showing all services and running services
