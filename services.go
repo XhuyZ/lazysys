@@ -39,13 +39,14 @@ func loadServices() tea.Cmd {
 }
 
 func getAllServices() ([]list.Item, error) {
+	// Get all loaded services
 	cmd := exec.Command("systemctl", "list-units", "--type=service", "--all")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
 	}
 
-	var services []list.Item
+	servicesMap := make(map[string]service)
 	lines := strings.Split(string(output), "\n")
 	for _, line := range lines {
 		fields := strings.Fields(line)
@@ -68,12 +69,48 @@ func getAllServices() ([]list.Item, error) {
 		if len(fields) > 3 {
 			description = strings.Join(fields[3:], " ")
 		}
-		services = append(services, service{
+		servicesMap[name] = service{
 			name:        name,
 			description: description,
 			loaded:      loaded,
 			active:      active,
-		})
+			enabled:     "enabled", // default, will update below if found disabled
+		}
+	}
+
+	// Get all disabled services
+	disabledCmd := exec.Command("systemctl", "list-unit-files", "--type=service", "--state=disabled", "--no-legend")
+	disabledOutput, err := disabledCmd.Output()
+	if err == nil {
+		disabledLines := strings.Split(string(disabledOutput), "\n")
+		for _, line := range disabledLines {
+			fields := strings.Fields(line)
+			if len(fields) == 0 {
+				continue
+			}
+			name := fields[0]
+			if !strings.HasSuffix(name, ".service") {
+				continue
+			}
+			if s, ok := servicesMap[name]; ok {
+				s.enabled = "disabled"
+				servicesMap[name] = s
+			} else {
+				servicesMap[name] = service{
+					name:    name,
+					loaded:  "",
+					active:  "",
+					description: "",
+					enabled: "disabled",
+				}
+			}
+		}
+	}
+
+	// Convert map to slice
+	var services []list.Item
+	for _, s := range servicesMap {
+		services = append(services, s)
 	}
 
 	return services, nil

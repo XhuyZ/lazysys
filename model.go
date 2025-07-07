@@ -18,14 +18,19 @@ type service struct {
 	status      string
 	loaded      string
 	active      string
+	enabled     string
 }
 
 func (s service) Title() string {
-	statusIcon := "🔴"
-	if strings.Contains(s.active, "active") {
+	statusIcon := "🔘"
+	if s.enabled == "disabled" {
+		statusIcon = "🔒"
+	} else if strings.Contains(s.active, "running") {
 		statusIcon = "🟢"
+	} else if strings.Contains(s.active, "exited") {
+		statusIcon = "🟡"
 	} else if strings.Contains(s.active, "inactive") {
-		statusIcon = "⚪"
+		statusIcon = "◯"
 	}
 	return fmt.Sprintf("%s %s", statusIcon, s.name)
 }
