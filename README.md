@@ -3,39 +3,29 @@
 A beautiful Terminal User Interface (TUI) for managing systemd services, built with Go and BubbleTea.
 
 ![Demo](assets/lazysys-vid.gif)
-
-
-
-
 ## ✨ Features
 
-- **Split View Interface**: Two windows showing all services and running services
-- **Real-time Service Management**: Start, stop, restart, enable, and disable services
-- **Interactive Navigation**: Use Shift+H/Shift+L to navigate between windows
-- **Search Functionality**: Search services by name or description
-- **Loading Animations**: Beautiful spinner while loading services
-- **Focus Indicators**: Clear visual feedback for active windows
-- **Help System**: Built-in help with keybindings
-- **About Window**: Coffee donation information with ASCII art
-- **Service Counts**: Display total and running service counts
-- **Status Icons**: Visual indicators for service status (🟢 running, 🔴 failed, ⚪ inactive)
+- **TUI for systemd**: Manage services from your terminal  
+- **Split View**: See all and active services side-by-side  
+- **Service Control**: Start, stop, restart, enable, disable  
+- **Fast Navigation**: Keyboard-driven workflow  
+- **Search**: Filter by name or description
 
 ## 🚀 Installation
 
-### Prerequisites
+### For Archlinux users
 
-- Go 1.21 or later
-- Linux system with systemd
-- Sudo privileges (required for service management)
-
+```bash
+yay -S lazysys-git
+```
 ### Build from Source
 
 ```bash
-# Clone or download the source
+# Clone the repo
 cd lazysys
 # Build the application
 make build
-# Run (requires sudo)
+# Run
 make run
 ```
 
@@ -61,21 +51,7 @@ make run
 - `3` - Stop service
 - `4` - Disable service
 - `5` - Enable service
-
-## ☕ Support
-
-If you find this tool helpful, consider buying me a coffee! ☕
-
-- **Bitcoin**: `bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh`
-- **Ethereum**: `0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6`
-- **Ko-fi**: https://ko-fi.com/lazysys
-
-## 📝 License
-
-This project is open source and available under the MIT License.
-
 ## 🤝 Contributing
-
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## ⚠️ Disclaimer
