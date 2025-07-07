@@ -47,22 +47,33 @@ func getAllServices() ([]list.Item, error) {
 
 	var services []list.Item
 	lines := strings.Split(string(output), "\n")
-	
 	for _, line := range lines {
 		fields := strings.Fields(line)
-		if len(fields) >= 4 && fields[0] != "UNIT" && fields[0] != "" {
-			name := fields[0]
-			loaded := fields[1]
-			active := fields[2]
-			description := strings.Join(fields[3:], " ")
-			
-			services = append(services, service{
-				name:        name,
-				description: description,
-				loaded:      loaded,
-				active:      active,
-			})
+		if len(fields) == 0 {
+			continue
 		}
+		name := fields[0]
+		if !strings.HasSuffix(name, ".service") {
+			continue
+		}
+		loaded := ""
+		active := ""
+		description := ""
+		if len(fields) > 1 {
+			loaded = fields[1]
+		}
+		if len(fields) > 2 {
+			active = fields[2]
+		}
+		if len(fields) > 3 {
+			description = strings.Join(fields[3:], " ")
+		}
+		services = append(services, service{
+			name:        name,
+			description: description,
+			loaded:      loaded,
+			active:      active,
+		})
 	}
 
 	return services, nil
@@ -88,7 +99,7 @@ func getRunningServices() ([]list.Item, error) {
 			fields[0] == "LOAD" || fields[0] == "ACTIVE" || fields[0] == "SUB" {
 			continue
 		}
-		name := fields[0]
+			name := fields[0]
 		loaded := ""
 		active := ""
 		description := ""
@@ -101,12 +112,12 @@ func getRunningServices() ([]list.Item, error) {
 		if len(fields) > 3 {
 			description = strings.Join(fields[3:], " ")
 		}
-		services = append(services, service{
-			name:        name,
-			description: description,
-			loaded:      loaded,
-			active:      active,
-		})
+			services = append(services, service{
+				name:        name,
+				description: description,
+				loaded:      loaded,
+				active:      active,
+			})
 	}
 
 	return services, nil
