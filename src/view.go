@@ -146,19 +146,19 @@ Service Actions:
 func (m model) aboutView() string {
 	about := `
 ╔══════════════════════════════════════════════════════════════╗
-║                    ☕ Buy Me a Coffee ☕                      ║
+║                    ☕ Buy Me a Coffee ☕                     ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
-║  🎉 Thanks for using LazySys!                               ║
+║  🎉 Thanks for using LazySys!                                ║
 ║                                                              ║
-║  If you find this tool helpful, consider buying me a coffee ║
+║  If you find this tool helpful, consider buying me a coffee  ║
 ║  to support further development!                             ║
 ║                                                              ║
-║  💳 Bitcoin: bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh   ║
-║  💳 Ethereum: 0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6  ║
-║  ☕ Ko-fi: https://ko-fi.com/lazysys                        ║
 ║                                                              ║
-║  Made with ❤️  using BubbleTea                              ║
+║  💳 Nah its free :))                                         ║
+║  ☕ How about giving this repo a star ?                      ║
+║                                                              ║
+║  Made with ❤️  using BubbleTea                               ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 `

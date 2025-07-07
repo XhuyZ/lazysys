@@ -1,4 +1,4 @@
-# 🔧 LazySys
+# LazySys
 
 A beautiful Terminal User Interface (TUI) for managing systemd services, built with Go and BubbleTea.
 
