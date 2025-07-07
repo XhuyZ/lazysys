@@ -6,7 +6,7 @@ build:
 	go build -o build/lazysys ./src
 
 # Run the application (requires sudo)
-run: build
+run: 
 	sudo ./build/lazysys
 
 # Clean build artifacts
