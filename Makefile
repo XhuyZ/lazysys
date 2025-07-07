@@ -1,8 +1,8 @@
-.PHONY: build run clean install
+.PHONY: build run clean install uninstall deps test release
 
 # Build the application
 build:
-	go build -o lazysys .
+	go build -o lazysys ./src
 
 # Run the application (requires sudo)
 run: build
@@ -10,7 +10,7 @@ run: build
 
 # Clean build artifacts
 clean:
-	rm -f lazysys
+	rm -f lazysys lazysys-linux-*
 
 # Install to system (requires sudo)
 install: build
@@ -23,13 +23,15 @@ uninstall:
 
 # Get dependencies
 deps:
-	go mod tidy
+	cd src && go mod tidy
 
 # Run tests
 test:
-	go test ./...
+	cd src && go test ./...
 
 # Build for release
 release: clean
-	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o lazysys-linux-amd64 .
-	GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o lazysys-linux-arm64 . 
+	mkdir build
+	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build/lazysys-linux-amd64 ./src
+	GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o build/lazysys-linux-arm64 ./src
+
