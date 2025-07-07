@@ -2,11 +2,12 @@
 
 # Build the application
 build:
-	go build -o lazysys ./src
+	mkdir build
+	go build -o build/lazysys ./src
 
 # Run the application (requires sudo)
 run: build
-	sudo ./lazysys
+	sudo ./build/lazysys
 
 # Clean build artifacts
 clean:

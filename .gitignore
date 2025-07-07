@@ -23,3 +23,7 @@ vendor/
 
 # OS files
 Thumbs.db 
+
+# Binaries and build artifacts
+/build/
+
