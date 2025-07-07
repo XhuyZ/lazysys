@@ -1,8 +1,10 @@
-# 🔧 LazySys Service Manager
+# 🔧 LazySys
 
 A beautiful Terminal User Interface (TUI) for managing systemd services, built with Go and BubbleTea.
 
- <video src="assets/lazysys-git.mp4" controls width="600"></video>
+![Demo](assets/lazysys-vid.gif)
+
+
 
 
 ## ✨ Features
@@ -31,25 +33,10 @@ A beautiful Terminal User Interface (TUI) for managing systemd services, built w
 ```bash
 # Clone or download the source
 cd lazysys
-
-# Install dependencies
-make deps
-
 # Build the application
 make build
-
 # Run (requires sudo)
 make run
-```
-
-### Install System-wide
-
-```bash
-# Install to /usr/local/bin
-make install
-
-# Now you can run from anywhere
-sudo lazysys
 ```
 
 ## 🎮 Usage
@@ -60,10 +47,10 @@ sudo lazysys
 |-----|--------|
 | `Shift+H` / `Shift+L` | Navigate between windows |
 | `j` / `k` | Navigate up/down in lists |
-| `Enter` | Select service for action |
+| `Number` | Select service for action |
 | `s` | Search services |
 | `?` | Toggle help |
-| `P` | Show about/coffee info |
+| `P` | Show about |
 | `q` / `Ctrl+C` | Quit |
 
 ### Service Actions
@@ -74,64 +61,6 @@ sudo lazysys
 - `3` - Stop service
 - `4` - Disable service
 - `5` - Enable service
-
-**Running Services Window:**
-- `1` - Stop service
-- `2` - Restart service
-- `3` - Disable service
-
-### Search
-
-1. Press `s` to enter search mode
-2. Type your search term
-3. Press `Enter` to search or `Esc` to cancel
-4. Search works on the currently focused window
-
-## 🎨 Interface
-
-The application features a modern, colorful interface with:
-
-- **Split Layout**: Left window shows all services, right shows running services
-- **Focus Indicators**: Active window has a colored border
-- **Status Icons**: Visual indicators for service status
-- **Loading Spinner**: Animated loading indicator
-- **Modal Windows**: Help and about information in floating windows
-- **Color-coded Messages**: Success/error messages with appropriate colors
-
-## 🔧 Development
-
-### Project Structure
-
-```
-lazysys/
-├── main.go          # Application entry point
-├── model.go         # Main application model and state
-├── view.go          # UI rendering and styling
-├── services.go      # Service management and systemctl integration
-├── go.mod           # Go module definition
-├── Makefile         # Build and installation scripts
-└── README.md        # This file
-```
-
-### Building
-
-```bash
-# Development build
-make build
-
-# Release builds (multiple architectures)
-make release
-
-# Clean build artifacts
-make clean
-```
-
-### Testing
-
-```bash
-# Run tests
-make test
-```
 
 ## ☕ Support
 
