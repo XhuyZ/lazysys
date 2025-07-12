@@ -15,7 +15,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
+	db, err := initDB()
+	if err != nil {
+		fmt.Printf("Error initializing database: %v", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	p := tea.NewProgram(initialModel(db), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running program: %v", err)
 		os.Exit(1)

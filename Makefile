@@ -2,8 +2,8 @@
 
 # Build the application
 build:
-	mkdir build
-	go build -o build/lazysys ./src
+	mkdir -p build
+	go build -o build/lazysys ./src/...
 
 # Run the application (requires sudo)
 run: 
@@ -32,7 +32,7 @@ test:
 
 # Build for release
 release: clean
-	mkdir build
+	mkdir -p build
 	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build/lazysys-linux-amd64 ./src
 	GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o build/lazysys-linux-arm64 ./src
 

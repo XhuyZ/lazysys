@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -19,14 +20,14 @@ type messageMsg struct {
 	text string
 }
 
-func loadServices() tea.Cmd {
+func loadServices(db *sql.DB) tea.Cmd {
 	return func() tea.Msg {
-		allServices, err := getAllServices()
+		allServices, err := getAllServices(db)
 		if err != nil {
 			return messageMsg{text: fmt.Sprintf("Error loading all services: %v", err)}
 		}
 
-		runningServices, err := getRunningServices()
+		runningServices, err := getRunningServices(db)
 		if err != nil {
 			return messageMsg{text: fmt.Sprintf("Error loading running services: %v", err)}
 		}
@@ -38,7 +39,7 @@ func loadServices() tea.Cmd {
 	}
 }
 
-func getAllServices() ([]list.Item, error) {
+func getAllServices(db *sql.DB) ([]list.Item, error) {
 	// Get all loaded services
 	cmd := exec.Command("systemctl", "list-units", "--type=service", "--all")
 	output, err := cmd.Output()
@@ -116,7 +117,7 @@ func getAllServices() ([]list.Item, error) {
 	return services, nil
 }
 
-func getRunningServices() ([]list.Item, error) {
+func getRunningServices(db *sql.DB) ([]list.Item, error) {
 	cmd := exec.Command("systemctl", "list-units", "--type=service", "--state=running")
 	output, err := cmd.Output()
 	if err != nil {
@@ -207,21 +208,21 @@ func executeServiceCommand(serviceName, action string) tea.Cmd {
 	}
 }
 
-func refreshServices() tea.Cmd {
+func refreshServices(db *sql.DB) tea.Cmd {
 	return tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
-		return loadServices()
+		return loadServices(db)
 	})
 }
 
-func performSearch(searchTerm string, focused int) tea.Cmd {
+func performSearch(searchTerm string, focused int, db *sql.DB) tea.Cmd {
 	return func() tea.Msg {
 		var services []list.Item
 		var err error
 
 		if focused == 0 {
-			services, err = getAllServices()
+			services, err = getAllServices(db)
 		} else {
-			services, err = getRunningServices()
+			services, err = getRunningServices(db)
 		}
 
 		if err != nil {
@@ -246,4 +247,5 @@ func performSearch(searchTerm string, focused int) tea.Cmd {
 
 		return messageMsg{text: fmt.Sprintf("Found %d services matching '%s'", len(filteredServices), searchTerm)}
 	}
-} 
+}
+ 

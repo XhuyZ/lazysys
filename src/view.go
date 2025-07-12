@@ -75,6 +75,9 @@ func (m model) View() string {
 	if m.showMenu {
 		return dimStyle.Render(main) + "\n" + m.floatingModal(m.menuView(), w, h)
 	}
+	if m.showDescription {
+		return dimStyle.Render(main) + "\n" + m.floatingModal(m.descriptionView(), w, h)
+	}
 
 	return main
 }
@@ -132,6 +135,7 @@ Navigation:
   Enter              Select service for action
   s                  Search services
   r                  Reload UI/services
+  U                  View/Edit service description
   ?                  Toggle this help
   P                  Show about/coffee info
   q / Esc / Ctrl+C   Quit/close window
@@ -149,7 +153,7 @@ func (m model) aboutView() string {
 ║                    ☕ Buy Me a Coffee ☕                     ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
-║  🎉 Thanks for using LazySys!                                ║
+║  🎉 Thanks for using LazySys!                                
 ║                                                              ║
 ║  If you find this tool helpful, consider buying me a coffee  ║
 ║  to support further development!                             ║
@@ -244,4 +248,20 @@ func (m model) menuView() string {
 	}
 	menuContent += "\nEnter: Execute | Esc/q: Cancel"
 	return modalStyle.Render(menuContent)
+}
+
+func (m model) descriptionView() string {
+	var content string
+	title := fmt.Sprintf("📖 Description: %s", m.selectedService.name)
+	content += title + "\n\n"
+
+	if m.editingDescription {
+		content += m.descriptionInput.View()
+		content += "\n\nEnter: Save | Esc: Cancel"
+	} else {
+		content += m.descriptionInput.Value()
+		content += "\n\ne: Edit | q/Esc/U: Close"
+	}
+
+	return modalStyle.Render(content)
 }

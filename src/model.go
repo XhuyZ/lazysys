@@ -1,12 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -44,23 +46,31 @@ func (s service) FilterValue() string {
 }
 
 type model struct {
-	allServices     list.Model
-	runningServices list.Model
-	focused         int // 0 = all services, 1 = running services
-	loading         bool
-	spinner         spinner.Model
-	searchMode      bool
-	searchInput     textinput.Model
-	showHelp        bool
-	showAbout       bool
-	showMenu        bool
-	selectedService service
-	menuChoice      int
-	message         string
-	messageTimer    *time.Timer
+	db                 *sql.DB
+	allServices        list.Model
+	runningServices    list.Model
+	focused            int // 0 = all services, 1 = running services
+	loading            bool
+	spinner            spinner.Model
+	searchMode         bool
+	searchInput        textinput.Model
+	showHelp           bool
+	showAbout          bool
+	showMenu           bool
+	showDescription    bool
+	editingDescription bool
+	descriptionInput   textarea.Model
+	selectedService    service
+	menuChoice         int
+	message            string
+	messageTimer       *time.Timer
 }
 
-func initialModel() model {
+type descriptionLoadedMsg struct {
+	description string
+}
+
+func initialModel(db *sql.DB) model {
 	s := spinner.New()
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
@@ -78,27 +88,36 @@ func initialModel() model {
 	runningList.Title = "🟢 Running Services"
 	runningList.SetShowHelp(false)
 
+	ta := textarea.New()
+	ta.Placeholder = "Enter a description for the service..."
+	ta.SetWidth(50)
+	ta.SetHeight(5)
+
 	return model{
-		allServices:     allList,
-		runningServices: runningList,
-		focused:         0,
-		loading:         true,
-		spinner:         s,
-		searchMode:      false,
-		searchInput:     ti,
-		showHelp:        false,
-		showAbout:       false,
-		showMenu:        false,
-		selectedService: service{},
-		menuChoice:      0,
-		message:         "",
+		db:                 db,
+		allServices:        allList,
+		runningServices:    runningList,
+		focused:            0,
+		loading:            true,
+		spinner:            s,
+		searchMode:         false,
+		searchInput:        ti,
+		showHelp:           false,
+		showAbout:          false,
+		showMenu:           false,
+		showDescription:    false,
+		editingDescription: false,
+		descriptionInput:   ta,
+		selectedService:    service{},
+		menuChoice:         0,
+		message:            "",
 	}
 }
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		m.spinner.Tick,
-		loadServices(),
+		loadServices(m.db),
 	)
 }
 
@@ -107,6 +126,36 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if m.showDescription {
+			if m.editingDescription {
+				switch msg.String() {
+				case "enter":
+					m.editingDescription = false
+					return m, updateServiceDescriptionCommand(m.db, m.selectedService.name, m.descriptionInput.Value())
+				case "esc":
+					m.editingDescription = false
+					m.descriptionInput.Blur()
+				}
+				var cmd tea.Cmd
+				m.descriptionInput, cmd = m.descriptionInput.Update(msg)
+				cmds = append(cmds, cmd)
+				return m, tea.Batch(cmds...)
+			}
+
+			switch msg.String() {
+			case "e":
+				m.editingDescription = true
+				m.descriptionInput.Focus()
+				return m, nil
+			case "q", "ctrl+c", "esc", "U":
+				m.showDescription = false
+				m.editingDescription = false
+				m.descriptionInput.Blur()
+				m.descriptionInput.SetValue("")
+			}
+			return m, nil
+		}
+
 		if m.searchMode {
 			switch msg.String() {
 			case "enter":
@@ -166,20 +215,36 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch msg.String() {
 		case "q", "ctrl+c":
-			if m.showMenu || m.showHelp || m.showAbout || m.searchMode {
+			if m.showMenu || m.showHelp || m.showAbout || m.searchMode || m.showDescription {
 				m.showMenu = false
 				m.showHelp = false
 				m.showAbout = false
 				m.searchMode = false
+				m.showDescription = false
 			} else {
 				return m, tea.Quit
 			}
 		case "esc":
-			if m.showMenu || m.showHelp || m.showAbout || m.searchMode {
+			if m.showMenu || m.showHelp || m.showAbout || m.searchMode || m.showDescription {
 				m.showMenu = false
 				m.showHelp = false
 				m.showAbout = false
 				m.searchMode = false
+				m.showDescription = false
+			}
+		case "U":
+			var item list.Item
+			if m.focused == 0 {
+				item = m.allServices.SelectedItem()
+			} else {
+				item = m.runningServices.SelectedItem()
+			}
+			if item != nil {
+				if s, ok := item.(service); ok {
+					m.selectedService = s
+					m.showDescription = true
+					return m, loadDescriptionCommand(m.db, s.name)
+				}
 			}
 		case "H":
 			m.focused = 0
@@ -236,32 +301,32 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch m.menuChoice {
 					case 1:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "start"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "start"), loadServices(m.db))
 					case 2:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "restart"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "restart"), loadServices(m.db))
 					case 3:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "stop"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "stop"), loadServices(m.db))
 					case 4:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "disable"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "disable"), loadServices(m.db))
 					case 5:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "enable"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "enable"), loadServices(m.db))
 					}
 				} else {
 					// Running services menu
 					switch m.menuChoice {
 					case 1:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "stop"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "stop"), loadServices(m.db))
 					case 2:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "restart"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "restart"), loadServices(m.db))
 					case 3:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "disable"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "disable"), loadServices(m.db))
 					}
 				}
 				m.showMenu = false
@@ -274,32 +339,32 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch m.menuChoice {
 					case 1:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "start"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "start"), loadServices(m.db))
 					case 2:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "restart"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "restart"), loadServices(m.db))
 					case 3:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "stop"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "stop"), loadServices(m.db))
 					case 4:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "disable"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "disable"), loadServices(m.db))
 					case 5:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "enable"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "enable"), loadServices(m.db))
 					}
 				} else {
 					// Running services menu
 					switch m.menuChoice {
 					case 1:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "stop"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "stop"), loadServices(m.db))
 					case 2:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "restart"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "restart"), loadServices(m.db))
 					case 3:
 						m.showMenu = false
-						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "disable"), loadServices())
+						return m, tea.Batch(executeServiceCommand(m.selectedService.name, "disable"), loadServices(m.db))
 					}
 				}
 				m.showMenu = false
@@ -323,7 +388,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case "r":
-			return m, loadServices()
+			return m, loadServices(m.db)
 		}
 
 	case tea.WindowSizeMsg:
@@ -335,6 +400,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.loading = false
 		m.allServices.SetItems(msg.allServices)
 		m.runningServices.SetItems(msg.runningServices)
+
+	case descriptionLoadedMsg:
+		m.descriptionInput.SetValue(msg.description)
+		var cmd tea.Cmd
+		m.descriptionInput, cmd = m.descriptionInput.Update(msg)
+		return m, cmd
 
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -363,4 +434,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+func loadDescriptionCommand(db *sql.DB, serviceName string) tea.Cmd {
+	return func() tea.Msg {
+		description, err := getServiceDescription(db, serviceName)
+		if err != nil {
+			return messageMsg{text: fmt.Sprintf("Error loading description: %v", err)}
+		}
+		return descriptionLoadedMsg{description: description}
+	}
+}
+
+func updateServiceDescriptionCommand(db *sql.DB, serviceName, description string) tea.Cmd {
+	return func() tea.Msg {
+		err := updateServiceDescription(db, serviceName, description)
+		if err != nil {
+			return messageMsg{text: fmt.Sprintf("Error updating description: %v", err)}
+		}
+		return messageMsg{text: "✅ Successfully updated description"}
+	}
 } 
