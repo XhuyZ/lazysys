@@ -5,12 +5,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var (
-	titleStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FAFAFA")).
-			Background(lipgloss.Color("#7D56F4")).
-			Padding(0, 1).
-			Bold(true)
+var ( titleStyle = lipgloss.NewStyle(). Foreground(lipgloss.Color("#FAFAFA")). Background(lipgloss.Color("#7D56F4")). Padding(0, 1). Bold(true)
 
 	focusedStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
@@ -204,7 +199,7 @@ func (m model) mainView() string {
 	s += lists + "\n\n"
 
 	// Help bar
-	helpText := "H/L: Navigate | j/k: Scroll | Enter: Action | s: Search | r: Reload | ?: Help | P: About | q: Quit"
+	helpText := "H/L: Navigate | j/k: Scroll | Enter: Action | s: Search | r: Reload || U: Show services info | ?: Help | P: About | q: Quit"
 	s += helpStyle.Render(helpText)
 
 	// Message
